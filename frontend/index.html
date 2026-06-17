@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Prepare for high-stakes technical interviews with Interviewer. Experience interactive, responsive mock interviews with tailored feedback.">
+    <title>Interviewer — Technical Interview Simulation</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%2309090d%22 stroke=%22rgba(255,255,255,0.07)%22 stroke-width=%224%22/><circle cx=%2250%22 cy=%2250%22 r=%2224%22 fill=%22none%22 stroke=%22url(%23g)%22 stroke-width=%226%22/><path d=%22M50 26 L50 74 M26 50 L74 50%22 stroke=%22url(%23g)%22 stroke-width=%224%22/><circle cx=%2250%22 cy=%2250%22 r=%226%22 fill=%22%23ffffff%22/><defs><linearGradient id=%22g%22 x1=%220%25%22 y1=%220%25%22 x2=%22100%25%22 y2=%22100%25%22><stop offset=%220%25%22 stop-color=%22%23667eea%22/><stop offset=%22100%25%22 stop-color=%22%23764ba2%22/></linearGradient></defs></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                        'space': ['Space Grotesk', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            /* Core Theme Gradients & Colors */
+            --color-primary-rgb: 102, 126, 234;     /* #667eea */
+            --color-secondary-rgb: 118, 75, 162;    /* #764ba2 */
+            --color-accent-rgb: 240, 147, 251;      /* #f093fb */
+
+            --color-primary: rgb(var(--color-primary-rgb));
+            --color-secondary: rgb(var(--color-secondary-rgb));
+            --color-accent: rgb(var(--color-accent-rgb));
+
+            /* Gradient Presets */
+            --gradient-text: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 50%, var(--color-accent) 100%);
+            --gradient-heading: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+
+            /* Surfaces (SaaS elevation levels) */
+            --bg-body: #050508;
+            --surface-sidebar: #09090d;
+            --surface-level1: rgba(18, 18, 26, 0.45);
+            --surface-level2: rgba(26, 26, 36, 0.65);
+
+            /* Borders */
+            --border-subtle: rgba(255, 255, 255, 0.07);
+            --border-active: rgba(var(--color-primary-rgb), 0.4);
+
+            /* Typography Colors (WCAG AA Compliant) */
+            --text-main: #f3f4f6;
+            --text-muted: #a1a1aa; /* Higher contrast than old text-gray-400 */
+            --text-dim: #71717a;   /* Higher contrast than old text-zinc-500 */
+
+            /* Animations & Easing */
+            --ease-out-cubic: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+            --transition-speed: 250ms;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+        }
+
+        /* SaaS Elevated Panels */
+        .saas-panel {
+            background-color: var(--surface-level1);
+            border: 1px solid var(--border-subtle);
+            box-shadow: 
+                0 4px 24px -4px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: border-color var(--transition-speed) var(--ease-out-cubic),
+                        box-shadow var(--transition-speed) var(--ease-out-cubic);
+        }
+
+        .saas-panel:hover {
+            border-color: rgba(var(--color-primary-rgb), 0.15);
+            box-shadow: 
+                0 8px 30px -4px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                0 0 15px rgba(var(--color-primary-rgb), 0.02);
+        }
+
+        .avatar-panel {
+            background: var(--surface-level2);
+            border: 1px solid var(--border-subtle);
+            box-shadow: 
+                0 12px 30px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                0 0 25px rgba(var(--color-primary-rgb), 0.12);
+        }
+
+        /* Subject Button styling */
+        .subject-btn {
+            background-color: rgba(20, 20, 28, 0.3);
+            border: 1px solid var(--border-subtle);
+            transition: all var(--transition-speed) var(--ease-out-cubic);
+            outline: none;
+        }
+
+        .subject-btn:hover:not(.active) {
+            transform: translateY(-2px);
+            border-color: rgba(var(--color-primary-rgb), 0.35);
+            background-color: rgba(255, 255, 255, 0.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .subject-btn.active {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            border-color: var(--color-primary);
+            box-shadow: 
+                0 0 20px rgba(var(--color-primary-rgb), 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        /* Micro-interactions & Buttons */
+        button, .btn-primary, .btn-secondary, .btn-record, .btn-accent {
+            transition: 
+                background var(--transition-speed) var(--ease-out-cubic),
+                border-color var(--transition-speed) var(--ease-out-cubic),
+                box-shadow var(--transition-speed) var(--ease-out-cubic),
+                transform var(--transition-speed) var(--ease-out-cubic),
+                filter var(--transition-speed) var(--ease-out-cubic),
+                opacity var(--transition-speed) var(--ease-out-cubic);
+            outline: none;
+        }
+
+        button:active:not(:disabled) {
+            transform: scale(0.96);
+        }
+
+        button:focus-visible,
+        .subject-btn:focus-visible {
+            outline: 2px solid var(--color-accent);
+            outline-offset: 2px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 
+                0 4px 14px rgba(var(--color-primary-rgb), 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            box-shadow: 
+                0 6px 20px rgba(var(--color-primary-rgb), 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.25);
+            filter: brightness(1.06);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: scale(0.96) translateY(0);
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 50%, var(--color-accent) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 
+                0 4px 16px rgba(var(--color-secondary-rgb), 0.22),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-accent:hover:not(:disabled) {
+            box-shadow: 
+                0 6px 22px rgba(var(--color-secondary-rgb), 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.25);
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+        }
+
+        .btn-accent:active:not(:disabled) {
+            transform: scale(0.96) translateY(0);
+        }
+
+        .btn-secondary {
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: rgba(239, 68, 68, 0.35);
+            color: #f87171;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary:active:not(:disabled) {
+            transform: scale(0.96) translateY(0);
+        }
+
+        .btn-record {
+            background-color: rgba(30, 30, 42, 0.4);
+            border: 2px solid var(--border-subtle);
+            color: var(--text-muted);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+        }
+
+        .btn-record:hover:not(:disabled) {
+            border-color: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+            transform: scale(1.03);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+        }
+
+        .btn-record:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .btn-record.recording-active {
+            background-color: #ef4444;
+            border-color: #fca5a5;
+            color: #ffffff;
+            animation: pulse-recording 1.5s infinite var(--ease-out-cubic);
+        }
+
+        @keyframes pulse-recording {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.04);
+            }
+            70% {
+                box-shadow: 0 0 0 16px rgba(239, 68, 68, 0);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .gradient-text {
+            background: var(--gradient-text);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .gradient-heading {
+            background: var(--gradient-heading);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-gradient {
+            background: var(--surface-sidebar);
+            border-color: var(--border-subtle);
+        }
+
+        /* Accessible text style overrides */
+        .text-muted {
+            color: var(--text-muted);
+        }
+        .text-dim {
+            color: var(--text-dim);
+        }
+
+        /* Interviewer Avatar Profile styles */
+        #avatarContainer {
+            transition: transform 0.5s var(--ease-out-cubic), 
+                        border-color 0.5s var(--ease-out-cubic),
+                        box-shadow 0.5s var(--ease-out-cubic);
+            will-change: transform;
+        }
+
+        #avatarContainer img {
+            object-fit: cover;
+            object-position: center 15%;
+        }
+
+        #avatarContainer.is-speaking {
+            transform: scale(1.03);
+            border-color: var(--color-primary);
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                0 0 35px rgba(var(--color-primary-rgb), 0.35);
+        }
+
+        /* Expanding pulse ring behind the avatar container */
+        .avatar-ring-pulse {
+            border: 3px solid rgba(var(--color-primary-rgb), 0.4);
+            box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.2);
+            opacity: 0;
+            transform: scale(0.9);
+            pointer-events: none;
+            transition: all 0.5s var(--ease-out-cubic);
+        }
+
+        .avatar-ring-pulse.is-speaking-ring {
+            animation: ring-pulse-animation 1.6s infinite ease-out;
+        }
+
+        @keyframes ring-pulse-animation {
+            0% {
+                transform: scale(0.96);
+                opacity: 0.85;
+                border-color: rgba(var(--color-primary-rgb), 0.6);
+            }
+            50% {
+                border-color: rgba(var(--color-accent-rgb), 0.4);
+            }
+            100% {
+                transform: scale(1.18);
+                opacity: 0;
+                border-color: rgba(var(--color-primary-rgb), 0);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-black min-h-screen text-white font-inter">
+    <canvas id="webgl-canvas" class="fixed top-0 left-0 w-full h-full pointer-events-none -z-10"></canvas>
+
+    <div class="min-h-screen flex flex-col lg:flex-row">
+
+        <!-- Sidebar - 1/5 width on large screens -->
+        <aside class="w-full lg:w-1/5 sidebar-gradient border-b lg:border-b-0 lg:border-r border-zinc-800/50 p-4 lg:p-6 flex flex-col">
+            
+            <!-- Logo -->
+            <div class="flex items-center gap-3 mb-8 pl-1">
+                <div class="w-10 h-10 bg-transparent border border-zinc-800 rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                        <path d="M2 12h20" />
+                    </svg>
+                </div>
+                <span class="font-space font-bold text-2xl tracking-tight text-white">Interviewer</span>
+            </div>
+
+            <!-- Topic Label -->
+            <h3 class="text-gray-400 text-xs font-semibold uppercase tracking-widest mb-3">Select Topic</h3>
+
+            <!-- Subject Buttons -->
+            <div class="flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0">
+                <button class="subject-btn flex items-center gap-3 rounded-xl p-3 text-left whitespace-nowrap flex-shrink-0" data-subject="Self Introduction">
+                    <div class="w-9 h-9 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-user text-blue-400"></i>
+                    </div>
+                    <span class="font-medium text-sm text-white">Self Introduction</span>
+                </button>
+
+                <button class="subject-btn flex items-center gap-3 rounded-xl p-3 text-left whitespace-nowrap flex-shrink-0" data-subject="Generative AI">
+                    <div class="w-9 h-9 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-brain text-purple-400"></i>
+                    </div>
+                    <span class="font-medium text-sm text-white">Generative AI</span>
+                </button>
+
+                <button class="subject-btn flex items-center gap-3 rounded-xl p-3 text-left whitespace-nowrap flex-shrink-0" data-subject="Python">
+                    <div class="w-9 h-9 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                        <i class="fab fa-python text-yellow-400"></i>
+                    </div>
+                    <span class="font-medium text-sm text-white">Python</span>
+                </button>
+
+                <button class="subject-btn flex items-center gap-3 rounded-xl p-3 text-left whitespace-nowrap flex-shrink-0" data-subject="English">
+                    <div class="w-9 h-9 bg-green-500/20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-language text-green-400"></i>
+                    </div>
+                    <span class="font-medium text-sm text-white">English</span>
+                </button>
+
+                <button class="subject-btn flex items-center gap-3 rounded-xl p-3 text-left whitespace-nowrap flex-shrink-0" data-subject="HTML">
+                    <div class="w-9 h-9 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                        <i class="fab fa-html5 text-orange-400"></i>
+                    </div>
+                    <span class="font-medium text-sm text-white">HTML</span>
+                </button>
+
+                <button class="subject-btn flex items-center gap-3 rounded-xl p-3 text-left whitespace-nowrap flex-shrink-0" data-subject="CSS">
+                    <div class="w-9 h-9 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                        <i class="fab fa-css3-alt text-blue-400"></i>
+                    </div>
+                    <span class="font-medium text-sm text-white">CSS</span>
+                </button>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-auto pt-6 hidden lg:block">
+                <p class="text-dim text-xs">Cadence Platform • Adaptive AI Session</p>
+            </div>
+        </aside>
+
+        <!-- Main Content - 4/5 width on large screens -->
+        <main class="flex-1 lg:w-4/5 flex flex-col bg-transparent z-10">
+            
+            <!-- Header - Centered -->
+            <header class="px-4 lg:px-8 py-6 lg:py-8 border-b border-zinc-800/50">
+                <div class="text-center max-w-3xl mx-auto">
+                    <h1 class="font-space font-bold text-3xl lg:text-5xl xl:text-6xl tracking-tight mb-3">
+                        <span class="gradient-text">Master Your Interview</span>
+                    </h1>
+                    <p class="text-gray-300 text-base lg:text-lg font-light tracking-wide">Interactive simulation for high-stakes technical interviews.</p>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="flex-1 p-4 lg:p-8 overflow-y-auto">
+
+                <!-- Welcome Screen -->
+                <div id="welcomeState" class="h-full flex flex-col items-center justify-center text-center py-8">
+                    <div class="w-28 h-28 lg:w-36 lg:h-36 avatar-panel rounded-full flex items-center justify-center mb-6">
+                        <i class="fas fa-microphone text-4xl lg:text-5xl text-zinc-400"></i>
+                    </div>
+                    <h2 class="font-space text-2xl lg:text-3xl font-bold gradient-heading mb-3">Initiate Simulation</h2>
+                    <p class="text-muted text-base lg:text-lg">Select a core topic from the sidebar to begin your session</p>
+                </div>
+
+                <!-- Interview Screen -->
+                <div id="interviewState" class="hidden">
+                    
+                    <!-- Subject Badge and Question Counter -->
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+                        <div class="flex items-center gap-3">
+                            <span id="subjectBadge" class="bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white px-5 py-2 rounded-full font-semibold shadow-lg">Python</span>
+                            <i id="subjectIcon" class="fab fa-python text-2xl text-yellow-400"></i>
+                        </div>
+                        <span class="text-gray-300 text-base font-medium">Question <span id="questionNum" class="text-white font-bold text-lg">1</span>/5</span>
+                    </div>                    <!-- Profile Image - Larger size -->
+                    <div class="flex flex-col items-center mb-6">
+                        <div class="relative flex items-center justify-center">
+                            <!-- Glowing animated ring waves behind the avatar -->
+                            <div id="avatarPulseRing" class="absolute w-44 h-44 lg:w-56 lg:h-56 xl:w-64 xl:h-64 rounded-full avatar-ring-pulse"></div>
+                            
+                            <!-- Main Avatar Frame -->
+                            <div id="avatarContainer" class="relative w-44 h-44 lg:w-56 lg:h-56 xl:w-64 xl:h-64 rounded-full overflow-hidden border-[3px] border-zinc-800/80 shadow-2xl saas-panel z-10">
+                                <img src="interviewer.png" alt="Interviewer" class="w-full h-full object-cover">
+                            </div>
+                        </div>
+                        <p class="text-gray-300 text-lg lg:text-xl font-medium mt-4">Interviewer</p>
+                    </div>
+                    <!-- Speaking Bubble -->
+                    <div class="max-w-2xl mx-auto mb-6">
+                        <div id="speakingBubble" class="hidden flex justify-center items-center gap-3 p-5 saas-panel rounded-2xl">
+                            <div class="flex gap-2">
+                                <div class="w-3 h-3 bg-[#667eea] rounded-full animate-bounce" style="animation-delay: 0s;"></div>
+                                <div class="w-3 h-3 bg-[#764ba2] rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                                <div class="w-3 h-3 bg-[#f093fb] rounded-full animate-bounce" style="animation-delay: 0.4s;"></div>
+                            </div>
+                            <span class="text-gray-200 ml-2 font-medium">Interviewer is speaking...</span>
+                        </div>
+                    </div>
+
+                    <!-- Recording Controls -->
+                    <div class="flex flex-col items-center gap-4 mb-6">
+                        <!-- Start Interview Button / Record Button -->
+                        <button id="startInterviewBtn" class="btn-primary text-white px-8 py-3 rounded-full font-bold text-base">
+                            Start Interview
+                        </button>
+                        
+                        <button id="recordBtn" disabled class="hidden btn-record w-20 h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center">
+                            <i id="micIcon" class="fas fa-microphone text-2xl lg:text-3xl"></i>
+                            <i id="stopIcon" class="fas fa-stop text-2xl lg:text-3xl hidden"></i>
+                        </button>
+                        <p id="recordingStatus" class="text-muted text-base">Click Start Interview to begin</p>
+
+                        <button id="submitBtn" disabled class="hidden btn-primary text-white px-8 py-3 rounded-full font-bold text-base">
+                            Submit Answer
+                        </button>
+                    </div>
+
+                    <!-- End Interview Button -->
+                    <div class="text-center">
+                        <button id="endInterviewBtn" disabled class="btn-secondary px-6 py-2.5 rounded-xl font-medium text-sm">
+                            End Interview
+                        </button>
+                    </div>
+
+                    <!-- Feedback Section -->
+                    <div id="feedbackSection" class="hidden mt-10 pt-6 border-t border-zinc-800/50">
+                        
+                        <!-- Get Feedback Button -->
+                        <div id="getFeedbackArea" class="text-center mb-6">
+                            <p class="text-gray-300 mb-4 text-base">Interview completed!</p>
+                            <button id="getFeedbackBtn" class="btn-accent text-white px-8 py-3 rounded-full font-bold text-base">
+                                Get Feedback
+                            </button>
+                        </div>
+
+                        <!-- Feedback Content -->
+                        <div id="feedbackContent" class="hidden max-w-xl mx-auto">
+                            
+                            <!-- Feedback Header -->
+                            <div class="flex flex-col sm:flex-row justify-between items-start gap-6 mb-6">
+                                <div>
+                                    <p class="text-muted text-xs mb-1 uppercase tracking-wider">Detailed Feedback</p>
+                                    <h3 id="feedbackSubject" class="font-space text-2xl font-bold gradient-heading">Subject</h3>
+                                </div>
+                                <div class="text-center">
+                                    <div class="relative w-24 h-24">
+                                        <svg class="w-24 h-24 transform -rotate-90">
+                                            <circle cx="48" cy="48" r="40" stroke="#27272a" stroke-width="5" fill="none" />
+                                            <circle id="scoreCircle" cx="48" cy="48" r="40" stroke="url(#scoreGradient)" stroke-width="5" fill="none" stroke-dasharray="251.2" stroke-dashoffset="251.2" stroke-linecap="round" class="transition-all duration-1000" />
+                                            <defs>
+                                                <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                    <stop offset="0%" stop-color="var(--color-primary)" />
+                                                    <stop offset="100%" stop-color="var(--color-secondary)" />
+                                                </linearGradient>
+                                            </defs>
+                                        </svg>
+                                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                            <span id="scoreValue" class="text-2xl font-bold text-white">0</span>
+                                            <span class="text-xs text-muted">/5</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-muted mt-1">Score</p>
+                                </div>
+                            </div>
+
+                            <!-- Feedback Cards -->
+                            <div class="space-y-4">
+                                <div class="saas-panel rounded-xl p-5">
+                                    <h4 class="text-lg font-bold mb-2 flex items-center gap-2 gradient-heading">
+                                        <i class="fas fa-star text-yellow-400"></i>
+                                        Feedback
+                                    </h4>
+                                    <p id="feedbackText" class="text-gray-200 leading-relaxed text-sm"></p>
+                                </div>
+                                <div class="saas-panel rounded-xl p-5">
+                                    <h4 class="text-lg font-bold mb-2 flex items-center gap-2 gradient-heading">
+                                        <i class="fas fa-chart-line text-cyan-400"></i>
+                                        Areas of Improvement
+                                    </h4>
+                                    <p id="improvementText" class="text-gray-200 leading-relaxed text-sm"></p>
+                                </div>
+                            </div>
+
+                            <!-- New Interview Button - Smaller width -->
+                            <div class="text-center mt-8">
+                                <button id="newInterviewBtn" class="btn-primary text-white px-10 py-3 rounded-xl font-bold text-base">
+                                    Start New Interview
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="index.js"></script>
+    <script src="visuals.js"></script>
+</body>
+
+</html>
