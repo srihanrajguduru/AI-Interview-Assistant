@@ -18,7 +18,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 MURF_API_KEY = os.getenv("MURF_API_KEY")
 
 # gemini-2.0-flash is quota-exhausted on the free tier for this key; 2.5-flash works.
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.1-flash-lite"
 
 # Lazy-initialized services
 client = None          # google-genai client (transcription + feedback JSON)
